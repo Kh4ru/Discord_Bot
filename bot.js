@@ -1,6 +1,7 @@
 const { Client, Events, GatewayIntentBits } = require('discord.js');
 const express = require("express")
 const commands = require('./commands.json')
+require('dotenv').config();
 const app = express()
 const port = 3000;
 app.get("/",(req,res) => {
