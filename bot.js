@@ -1,5 +1,6 @@
 const { Client, Events, GatewayIntentBits } = require('discord.js');
 const express = require("express")
+const {token} = require('./config.json')
 const commands = require('./commands.json')
 require('dotenv').config();
 const app = express()
