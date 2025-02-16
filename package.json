@@ -10,7 +10,7 @@
     "discord.js": "^14.17.3",
     "express": "^4.21.2",
     "dotenv": "^16.0.0",
-    "groq-sdk": "^1.0.0"
+    "groq": "^1.0.0"
   },
   "author": "Kh4ru",
   "license": "ISC"
