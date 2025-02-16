@@ -7,7 +7,7 @@ const port = 3000;
 
 // API Express pour vérifier que le bot est en ligne
 app.get("/", (req, res) => {
-    res.send("Le bot est en ligne :)");
+    res.send("J'utilise les commandes slash maintenant");
 });
 
 // Initialisation du client Discord avec les bonnes intentions
