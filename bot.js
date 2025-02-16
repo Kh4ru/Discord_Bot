@@ -1,6 +1,5 @@
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, REST, Routes } = require('discord.js');
 const express = require("express");
-const axios = require("axios"); // Importation de axios
 require('dotenv').config();
 const commands = require('./commands.json'); // Assure-toi que ce fichier contient un tableau de chaînes de caractères
 const app = express();
@@ -12,55 +11,43 @@ app.get("/", (req, res) => {
 });
 
 // Initialisation du client Discord avec les bonnes intentions
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-client.on("messageCreate", async (message) => {
-    if (message.author.bot) return; // Ignore les messages des autres bots
-    
-    const command = message.content.substring(1); // Retire le "!" du début du message
+// Liste des commandes slash
+const slashCommands = [
+    {
+        name: 'hello',
+        description: 'Envoie un message de salutations !',
+    },
+    // Ajoute d'autres commandes ici selon ton besoin
+];
 
-    // Vérifie si la commande existe dans "commands.json" et si la commande est une chaîne de caractères
-    if (message.content.startsWith("!") && typeof command === 'string' && commands.includes(command)) {
-        switch (command) {
-            case "hello":
-                message.reply("SLT !");
-                break;
+// Enregistrer les commandes slash au démarrage
+const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
 
-            // Commande pour générer un message via Groq en utilisant axios
-            case "generate":
-                try {
-                    // Effectuer la requête avec axios, comme un curl
-                    const response = await axios.post(
-                        'https://api.groq.com/openai/v1/chat/completions',
-                        {
-                            messages: [
-                                {
-                                    role: "user",
-                                    content: "Explain the importance of fast language models"
-                                }
-                            ],
-                            model: "llama-3.3-70b-versatile"
-                        },
-                        {
-                            headers: {
-                                "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
-                                "Content-Type": "application/json"
-                            }
-                        }
-                    );
+(async () => {
+    try {
+        console.log('Début de l\'enregistrement des commandes slash...');
 
-                    // Envoie la réponse générée par Groq
-                    const generatedResponse = response.data.choices[0].message.content;
-                    message.reply(generatedResponse); // Envoie la réponse générée dans Discord
-                } catch (error) {
-                    console.error("Erreur de génération avec Groq:", error);
-                    message.reply("Désolé, je n'ai pas pu générer une réponse.");
-                }
-                break;
+        // Enregistrement des commandes globales
+        await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), {
+            body: slashCommands,
+        });
 
-            default:
-                message.reply("Commande non reconnue !");
-        }
+        console.log('Commandes slash enregistrées avec succès.');
+    } catch (error) {
+        console.error('Erreur lors de l\'enregistrement des commandes slash:', error);
+    }
+})();
+
+// Gestion des interactions slash
+client.on('interactionCreate', async (interaction) => {
+    if (!interaction.isCommand()) return;
+
+    const { commandName } = interaction;
+
+    if (commandName === 'hello') {
+        await interaction.reply('SLT !');
     }
 });
 
