@@ -1,8 +1,8 @@
 const { Client, GatewayIntentBits } = require('discord.js');
 const express = require("express");
+const axios = require("axios"); // Importation de axios
 require('dotenv').config();
 const commands = require('./commands.json'); // Assure-toi que ce fichier contient un tableau de chaînes de caractères
-const Groq = require('groq');  // Importation de Groq pour générer des réponses
 const app = express();
 const port = 3000;
 
@@ -13,11 +13,6 @@ app.get("/", (req, res) => {
 
 // Initialisation du client Discord avec les bonnes intentions
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
-
-// Initialisation de l'API Groq
-const groqClient = new Groq({
-    api_key: process.env.GROQ_API_KEY,  // Assure-toi que la clé API Groq est dans le fichier .env
-});
 
 client.on("messageCreate", async (message) => {
     if (message.author.bot) return; // Ignore les messages des autres bots
@@ -31,23 +26,32 @@ client.on("messageCreate", async (message) => {
                 message.reply("SLT !");
                 break;
 
-            // Commande pour générer un message via Groq
+            // Commande pour générer un message via Groq en utilisant axios
             case "generate":
                 try {
-                    // Utilisation de Groq pour générer une réponse
-                    const generatedResponse = await groqClient.chat.completions.create({
-                        messages: [
-                            {
-                                role: "user",
-                                content: "Ecris une réponse sympa pour un chatbot",
+                    // Effectuer la requête avec axios, comme un curl
+                    const response = await axios.post(
+                        'https://api.groq.com/openai/v1/chat/completions',
+                        {
+                            messages: [
+                                {
+                                    role: "user",
+                                    content: "Explain the importance of fast language models"
+                                }
+                            ],
+                            model: "llama-3.3-70b-versatile"
+                        },
+                        {
+                            headers: {
+                                "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+                                "Content-Type": "application/json"
                             }
-                        ],
-                        model: "llama-3.3-70b-versatile", // Choix du modèle pour générer un texte
-                    });
+                        }
+                    );
 
-                    // Répondre avec la réponse générée par Groq
-                    const responseText = generatedResponse.choices[0].message.content;
-                    message.reply(responseText); // Envoie la réponse générée dans Discord
+                    // Envoie la réponse générée par Groq
+                    const generatedResponse = response.data.choices[0].message.content;
+                    message.reply(generatedResponse); // Envoie la réponse générée dans Discord
                 } catch (error) {
                     console.error("Erreur de génération avec Groq:", error);
                     message.reply("Désolé, je n'ai pas pu générer une réponse.");
