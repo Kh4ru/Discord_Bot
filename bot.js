@@ -1,14 +1,14 @@
 const { Client, GatewayIntentBits } = require('discord.js');
 const express = require("express");
 require('dotenv').config();
-const commands = require('./commands.json');
-const Groq = require('groq');  // Ajout de Groq pour la génération de texte
+const commands = require('./commands.json'); // Assure-toi que ce fichier contient un tableau de chaînes de caractères
+const Groq = require('groq');  // Importation de Groq pour générer des réponses
 const app = express();
 const port = 3000;
 
-// Définition de l'API Express pour vérifier que le bot est en ligne
+// API Express pour vérifier que le bot est en ligne
 app.get("/", (req, res) => {
-    res.send("Le bot est en ligne :) Il utilise Groq aussi !");
+    res.send("Le bot est en ligne :)");
 });
 
 // Initialisation du client Discord avec les bonnes intentions
@@ -16,16 +16,17 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBit
 
 // Initialisation de l'API Groq
 const groqClient = new Groq({
-    api_key: process.env.GROQ_API_KEY,  // Assure-toi d'avoir configuré ta clé API Groq dans le fichier .env
+    api_key: process.env.GROQ_API_KEY,  // Assure-toi que la clé API Groq est dans le fichier .env
 });
 
 client.on("messageCreate", async (message) => {
     if (message.author.bot) return; // Ignore les messages des autres bots
     
-    // Vérifie si le message commence par "!" et si la commande existe dans "commands.json"
-    const command = message.content.substring(1); // Supprime le "!" du début
-    if (message.content.startsWith("!") && commands.includes(command)) {
-        switch(command) {
+    const command = message.content.substring(1); // Retire le "!" du début du message
+
+    // Vérifie si la commande existe dans "commands.json" et si la commande est une chaîne de caractères
+    if (message.content.startsWith("!") && typeof command === 'string' && commands.includes(command)) {
+        switch (command) {
             case "hello":
                 message.reply("SLT !");
                 break;
@@ -33,6 +34,7 @@ client.on("messageCreate", async (message) => {
             // Commande pour générer un message via Groq
             case "generate":
                 try {
+                    // Utilisation de Groq pour générer une réponse
                     const generatedResponse = await groqClient.chat.completions.create({
                         messages: [
                             {
@@ -40,12 +42,12 @@ client.on("messageCreate", async (message) => {
                                 content: "Ecris une réponse sympa pour un chatbot",
                             }
                         ],
-                        model: "llama-3.3-70b-versatile", // Utilisation du modèle pour générer un texte
+                        model: "llama-3.3-70b-versatile", // Choix du modèle pour générer un texte
                     });
 
                     // Répondre avec la réponse générée par Groq
                     const responseText = generatedResponse.choices[0].message.content;
-                    message.reply(responseText);  // Répond avec le texte généré par Groq
+                    message.reply(responseText); // Envoie la réponse générée dans Discord
                 } catch (error) {
                     console.error("Erreur de génération avec Groq:", error);
                     message.reply("Désolé, je n'ai pas pu générer une réponse.");
@@ -58,8 +60,8 @@ client.on("messageCreate", async (message) => {
     }
 });
 
-// Lancer l'application Express
+// Lancer l'application Express pour vérifier si le bot est en ligne
 app.listen(port, () => {
     console.info("Client en ligne !");
-    client.login(process.env.DISCORD_TOKEN); // Se connecter avec le token de Discord
+    client.login(process.env.DISCORD_TOKEN); // Connexion au bot Discord avec le token
 });
